@@ -10,6 +10,7 @@ import Foundation
 
 @objc public protocol SKPhotoBrowserDelegate {
     
+    @objc func didLongPressPhoto(_ browser: SKPhotoBrowser, at index: Int)
     /**
      Tells the delegate that the browser started displaying a new photo
      

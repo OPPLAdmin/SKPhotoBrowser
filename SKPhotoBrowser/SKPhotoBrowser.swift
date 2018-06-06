@@ -27,11 +27,11 @@ open class SKPhotoBrowser: UIViewController {
     fileprivate var actionView: SKActionView!
     fileprivate(set) var paginationView: SKPaginationView!
     fileprivate var toolbar: SKToolbar!
-
+    
     // actions
     fileprivate var activityViewController: UIActivityViewController!
     fileprivate var panGesture: UIPanGestureRecognizer?
-
+    
     // for status check property
     fileprivate var isEndAnimationByToolBar: Bool = true
     fileprivate var isViewActive: Bool = false
@@ -46,7 +46,7 @@ open class SKPhotoBrowser: UIViewController {
     
     // delegate
     open weak var delegate: SKPhotoBrowserDelegate?
-
+    
     // statusbar initial state
     private var statusbarHidden: Bool = UIApplication.shared.isStatusBarHidden
     
@@ -85,7 +85,7 @@ open class SKPhotoBrowser: UIViewController {
         animator.senderOriginImage = photos[currentPageIndex].underlyingImage
         animator.senderViewForAnimation = photos[currentPageIndex] as? UIView
     }
-
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
@@ -109,7 +109,7 @@ open class SKPhotoBrowser: UIViewController {
         configureActionView()
         configurePaginationView()
         configureToolbar()
-
+        
         animator.willPresent(self)
     }
     
@@ -129,17 +129,17 @@ open class SKPhotoBrowser: UIViewController {
         isPerformingLayout = true
         // where did start
         delegate?.didShowPhotoAtIndex?(self, index: currentPageIndex)
-
+        
         // toolbar
         toolbar.frame = frameForToolbarAtOrientation()
         
         // action
         actionView.updateFrame(frame: view.frame)
-
+        
         // paging
         paginationView.updateFrame(frame: view.frame)
         pagingScrollView.updateFrame(view.bounds, currentPageIndex: currentPageIndex)
-
+        
         isPerformingLayout = false
     }
     
@@ -184,7 +184,7 @@ open class SKPhotoBrowser: UIViewController {
     
     open func performLayout() {
         isPerformingLayout = true
-
+        
         // reset local cache
         pagingScrollView.reload()
         pagingScrollView.updateContentOffset(currentPageIndex)
@@ -289,7 +289,7 @@ public extension SKPhotoBrowser {
                 return
             }
             isEndAnimationByToolBar = false
-
+            
             let pageFrame = frameForPageAtIndex(index)
             pagingScrollView.jumpToPageAtIndex(pageFrame)
         }
@@ -447,7 +447,7 @@ internal extension SKPhotoBrowser {
                 // Continue Showing View
                 setNeedsStatusBarAppearanceUpdate()
                 view.backgroundColor = bgColor
-
+                
                 let velocityY: CGFloat = CGFloat(0.35) * sender.velocity(in: self.view).y
                 let finalX: CGFloat = firstX
                 let finalY: CGFloat = viewHalfHeight
@@ -462,7 +462,7 @@ internal extension SKPhotoBrowser {
             }
         }
     }
-   
+    
     @objc func actionButtonPressed(ignoreAndShare: Bool) {
         delegate?.willShowActionSheet?(currentPageIndex)
         
@@ -534,15 +534,27 @@ private extension SKPhotoBrowser {
     func configurePagingScrollView() {
         pagingScrollView.delegate = self
         view.addSubview(pagingScrollView)
+        
+        let longPressGr = UILongPressGestureRecognizer(target: self, action: #selector(SKPhotoBrowser.photoLongPressed))
+        pagingScrollView.addGestureRecognizer(longPressGr)
     }
-
+    
+    @objc private func photoLongPressed(_ sender: UILongPressGestureRecognizer) {
+        switch sender.state {
+        case .began:
+            delegate?.didLongPressPhoto(self, at: self.currentPageIndex)
+        default:
+            break
+        }
+    }
+    
     func configureGestureControl() {
         guard !SKPhotoBrowserOptions.disableVerticalSwipe else { return }
         
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(SKPhotoBrowser.panGestureRecognized(_:)))
         panGesture?.minimumNumberOfTouches = 1
         panGesture?.maximumNumberOfTouches = 1
-
+        
         if let panGesture = panGesture {
             view.addGestureRecognizer(panGesture)
         }
@@ -552,7 +564,7 @@ private extension SKPhotoBrowser {
         actionView = SKActionView(frame: view.frame, browser: self)
         view.addSubview(actionView)
     }
-
+    
     func configurePaginationView() {
         paginationView = SKPaginationView(frame: view.frame, browser: self)
         view.addSubview(paginationView)
@@ -562,14 +574,14 @@ private extension SKPhotoBrowser {
         toolbar = SKToolbar(frame: frameForToolbarAtOrientation(), browser: self)
         view.addSubview(toolbar)
     }
-
+    
     func setControlsHidden(_ hidden: Bool, animated: Bool, permanent: Bool) {
         // timer update
         cancelControlHiding()
         
         // scroll animation
         pagingScrollView.setControlsHidden(hidden: hidden)
-
+        
         // paging animation
         paginationView.setControlsHidden(hidden: hidden)
         

@@ -46,6 +46,8 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
     
     deinit {
         backgroundView.removeFromSuperview()
+        resizableImageView?.image = nil
+        resizableImageView?.removeFromSuperview()
     }
     
     func willPresent(_ browser: SKPhotoBrowser) {
